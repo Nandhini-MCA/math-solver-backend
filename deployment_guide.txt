@@ -1,0 +1,51 @@
+========================================================================
+DEPLOYMENT GUIDE - NETLIFY & RENDER
+========================================================================
+
+Follow these steps to deploy your project to production.
+
+------------------------------------------------------------------------
+STEP 1: DEPLOY BACKEND (RENDER)
+------------------------------------------------------------------------
+1. Go to https://dashboard.render.com
+2. Click "New" -> "Web Service".
+3. Connect your GitHub repository: "math-solver-backend".
+4. Settings:
+   - Name: math-solver-api (or any name)
+   - Runtime: Docker (Recommended because of Tesseract/Graphviz deps)
+   - Docker Context: .
+   - Dockerfile Path: Dockerfile
+5. Add Environment Variables (Copy from your backend/.env):
+   - GEMINI_API_KEY
+   - GROQ_API_KEY
+   - DATABASE_URL
+   - JWT_SECRET_KEY
+   - GOOGLE_CLIENT_ID
+   - GOOGLE_CLIENT_SECRET
+6. Click "Create Web Service".
+7. ONCE DEPLOYED: Copy your Render URL (e.g., https://math-solver-api.onrender.com).
+
+------------------------------------------------------------------------
+STEP 2: DEPLOY FRONTEND (NETLIFY)
+------------------------------------------------------------------------
+1. Go to https://app.netlify.com
+2. Click "Add new site" -> "Import from an existing project".
+3. Connect your GitHub repository: "math-solver-frontend".
+4. Build Settings:
+   - Build command: npm install --legacy-peer-deps && npm run build
+   - Publish directory: dist
+5. Add Environment Variables:
+   - VITE_API_URL: [PASTE YOUR RENDER URL FROM STEP 1]
+   - VITE_GOOGLE_CLIENT_ID: [PASTE YOUR GOOGLE CLIENT ID]
+6. Click "Deploy site".
+
+------------------------------------------------------------------------
+STEP 3: POST-DEPLOYMENT (CORS)
+------------------------------------------------------------------------
+If you encounter CORS errors, ensure your backend allows your Netlify URL.
+Currently, the backend is configured to be open, but you may need to update 
+app/main.py if you have specific CORS restrictions.
+
+========================================================================
+ZARA AI - DEPLOYMENT READY
+========================================================================

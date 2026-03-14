@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stem-copilot-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    restart: always
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8000
+        - VITE_GOOGLE_CLIENT_ID=571057490382-1tt1h7af7jt0bm0ovkt911lcm3q6ah1a.apps.googleusercontent.com
+    container_name: stem-copilot-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: always
