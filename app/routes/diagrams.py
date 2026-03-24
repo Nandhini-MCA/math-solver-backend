@@ -11,8 +11,20 @@ router = APIRouter(prefix="/diagrams", tags=["diagrams"])
 
 @router.post("/generate", response_model=DiagramResponse)
 async def generate_diagram(req: DiagramRequest, current_user: User = Depends(get_current_user)):
-    system_prompt = "You are a graphviz DOT generator. Given a scenario, output ONLY valid Graphviz DOT language syntax, without markdown formatting, entirely ready to be passed to Graphviz render system."
+    system_prompt = """You are an expert STEM Visual Architect. Your task is to transform a scientific or mathematical concept into a highly detailed, step-by-step logical flowchart using valid Graphviz DOT syntax.
+
+Rules for your output:
+1. Output ONLY valid DOT code. No markdown, no triple backticks, no conversational text.
+2. Use 'digraph' with 'rankdir=TB'.
+3. Break the problem into chronological steps: [Problem Input] -> [Identity Formula] -> [Plug in Values] -> [Intermediate Calculation] -> [Final Output].
+4. NODES: Include actual equations and numbers in the 'label'. Use clear, readable mathematical notation (e.g., v = u + at).
+5. DESIGN: Use 'node [shape=box, style="filled,rounded", color="#4f46e5", fontcolor="#1e1b4b", fillcolor="#f5f3ff", fontname="Arial", fontsize=11, width=2.5]'.
+6. EDGES: Use 'edge [color="#94a3b8", arrowhead="vee", fontname="Arial", fontsize=9]'.
+7. QUALITY: Ensure labels are descriptive (e.g., "Step 1: Calculate hypotenuse using c = sqrt(a² + b²)").
+
+Concept to visualize: """
     dot_string = await _fallback_call(system_prompt, req.description, temperature=0.3)
+
     if dot_string.startswith("```"):
         # Strip markdown syntax
         parts = dot_string.split("\n", 1)

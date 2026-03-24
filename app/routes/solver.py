@@ -41,5 +41,6 @@ async def upload_image(file: UploadFile = File(...), current_user: User = Depend
     with open(file_location, "wb+") as file_object:
         shutil.copyfileobj(file.file, file_object)
         
-    extracted_text = extract_text_from_image(file_location)
+    extracted_text = await extract_text_from_image(file_location)
     return {"extracted_text": extracted_text, "filename": file.filename}
+

@@ -1,0 +1,10 @@
+digraph pythagorean_theorem {
+    node[shape=box];
+    a[label="a"];
+    b[label="b"];
+    c[label="c"];
+    equation[label="a² + b² = c²"];
+    a -> equation;
+    b -> equation;
+    c -> equation;
+}

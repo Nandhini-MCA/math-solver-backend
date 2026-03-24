@@ -12,13 +12,48 @@ gemini_api_key = os.getenv("GEMINI_API_KEY")
 if gemini_api_key:
     genai.configure(api_key=gemini_api_key)
 
+import base64
+
+async def groq_vision_call(image_path: str, prompt: str) -> str:
+    """
+    Uses Llama 3.2-Vision on Groq for OCR and solving from images.
+    """
+    try:
+        if not groq_client:
+            raise ValueError("Groq API key missing.")
+            
+        with open(image_path, "rb") as image_file:
+            base64_image = base64.b64encode(image_file.read()).decode('utf-8')
+            
+        response = await groq_client.chat.completions.create(
+            model="llama-3.2-11b-vision-preview",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_image}",
+                            },
+                        },
+                    ],
+                }
+            ],
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        print(f"Groq Vision failed: {e}. Reverting to Gemini.")
+        raise e
+
 async def _fallback_call(system_prompt: str, user_prompt: str, temperature: float = 0.4) -> str:
     # Attempt 1: Groq
     try:
         if not groq_client:
             raise ValueError("Groq API key is missing.")
             
-        print("Attempting Groq generation...")
+        print("Attempting Groq Text generation...")
         response = await groq_client.chat.completions.create(
             model=GROQ_MODEL,
             messages=[
@@ -39,7 +74,6 @@ async def _fallback_call(system_prompt: str, user_prompt: str, temperature: floa
             model = genai.GenerativeModel("gemini-1.5-pro")
             full_prompt = f"System Instructions: {system_prompt}\n\nUser Question: {user_prompt}"
             
-            # genai currently defaults to sync generate_content, but we can utilize async methods if supported
             response = await model.generate_content_async(
                 full_prompt,
                 generation_config=genai.types.GenerationConfig(temperature=temperature)
@@ -47,6 +81,7 @@ async def _fallback_call(system_prompt: str, user_prompt: str, temperature: floa
             return response.text
         except Exception as gemini_err:
             return f"Error: Both AI services failed. Groq error: {str(groq_err)} | Gemini error: {str(gemini_err)}"
+
 
 async def chat_fallback_call(system_prompt: str, messages: list, temperature: float = 0.7) -> str:
     # Attempt 1: Groq
@@ -97,8 +132,19 @@ async def chat_fallback_call(system_prompt: str, messages: list, temperature: fl
             return f"Error: Chat services failed. Groq error: {str(groq_err)} | Gemini error: {str(gemini_err)}"
 
 async def generate_solution(question_text: str) -> str:
-    system_prompt = "You are an expert AI STEM Copilot tutor. Provide a step-by-step solution to the user's question, ending with a clear final answer."
+    system_prompt = """You are an Elite AI STEM Copilot Tutor. Your goal is to solve complex physics, chemistry, and math problems with absolute precision and pedagogical brilliance.
+
+Rules for your response:
+1. STEP-BY-STEP PROCEDURE: Always break the solution into clear,Numbered logical steps. Never skip logical transitions.
+2. RELEVANT EQUATIONS: In every step, explicitly state the formula, theory, or principle being applied (e.g., "Using the Ideal Gas Law: PV = nRT").
+3. MATH NOTATION: Use clear mathematical notation. Use LaTeX style $ ... $ for inline math and $$ ... $$ for blocks if possible, or very clear text-based math.
+4. PLUG-IN TRACE: Show the exact substitution of given values into the variables (e.g., "F = (10kg) * (9.8m/s²)").
+5. CONCEPTUAL 'WHY': Briefly explain the reasoning behind each major step so the user understands the 'Why', not just the 'How'.
+6. FINAL RESULT: Conclude with a clearly bolded final answer including units.
+
+Focus on accuracy and depth. Answer the following STEM question:"""
     return await _fallback_call(system_prompt, question_text, temperature=0.4)
+
 
 async def chat_with_tutor(messages: list) -> str:
     system_prompt = "You are a friendly, encouraging STEM AI tutor interacting via a chat interface. Provide concise and helpful explanations."

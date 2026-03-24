@@ -1,20 +1,18 @@
-import graphviz
-import uuid
-import os
-
-DIAGRAMS_DIR = "diagrams"
-os.makedirs(DIAGRAMS_DIR, exist_ok=True)
+import urllib.parse
 
 def render_graphviz(dot_string: str) -> str:
-    # Safely renders a DOT string into a PNG image and returns the local path
-    filename = str(uuid.uuid4())
-    filepath = os.path.join(DIAGRAMS_DIR, filename)
-    
+    """
+    Renders DOT syntax using QuickChart API (Removes local Graphviz dependency).
+    """
     try:
-        src = graphviz.Source(dot_string)
-        src.render(filepath, format='png', cleanup=True)
-        return f"/diagrams/{filename}.png"
-    except graphviz.ExecutableNotFound:
-        return "Error: Graphviz executable not found on host."
+        # Clean up the dot string for URL encoding
+        clean_dot = dot_string.strip()
+        encoded_dot = urllib.parse.quote(clean_dot)
+        
+        # We return the direct QuickChart link as the image URL
+        # This link works immediately in an <img> tag on the frontend
+        return f"https://quickchart.io/graphviz?format=png&graph={encoded_dot}"
+        
     except Exception as e:
-        return f"Error generating diagram: {str(e)}"
+        return f"Error formatting diagram: {str(e)}"
+
