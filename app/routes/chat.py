@@ -4,7 +4,7 @@ from app.database import get_db
 from app.models import User, ChatSession, ChatMessage
 from app.schemas import ChatMessageRequest, ChatMessageResponse
 from app.dependencies import get_current_user
-from app.services.ai_service import chat_with_tutor
+from app.services.ai_service import chat_with_tutor, detect_language
 import os
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -31,8 +31,11 @@ async def chat_interaction(req: ChatMessageRequest, session_id: int = None, db: 
     history = db.query(ChatMessage).filter(ChatMessage.session_id == chat_session.id).order_by(ChatMessage.timestamp).limit(10).all()
     messages_payload = [{"role": msg.role.value, "content": msg.message} for msg in history]
 
-    # Generate response from AI Tutor
-    ai_response_text = await chat_with_tutor(messages_payload)
+    # Silently detect user's language from the current message
+    detected_lang = await detect_language(req.message)
+
+    # Generate response from AI Tutor in the detected language
+    ai_response_text = await chat_with_tutor(messages_payload, detected_language=detected_lang)
     
     # Save AI response
     ai_msg = ChatMessage(session_id=chat_session.id, message=ai_response_text, role="ai")
@@ -40,4 +43,11 @@ async def chat_interaction(req: ChatMessageRequest, session_id: int = None, db: 
     db.commit()
     db.refresh(ai_msg)
 
-    return ai_msg
+    # Return response with detected language label for the frontend badge
+    return ChatMessageResponse(
+        role=ai_msg.role.value,
+        message=ai_msg.message,
+        timestamp=ai_msg.timestamp,
+        detected_language=detected_lang
+    )
+

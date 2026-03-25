@@ -27,11 +27,14 @@ class UserResponse(BaseModel):
 
 class QuestionRequest(BaseModel):
     text: str
+    explanation_mode: Optional[str] = "standard"
+    language: Optional[str] = None
 
 class QuestionResponse(BaseModel):
     id: int
     question_text: str
     solution_text: str
+    detected_language: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -49,6 +52,7 @@ class ChatMessageResponse(BaseModel):
     role: str
     message: str
     timestamp: datetime
+    detected_language: Optional[str] = None
 
     class Config:
         from_attributes = True
