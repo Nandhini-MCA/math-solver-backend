@@ -137,7 +137,7 @@ async def generate_solution(
 ) -> str:
     base_prompt = "You are an Elite AI STEM Copilot Tutor. Your goal is to solve complex physics, chemistry, and math problems with absolute precision and pedagogical brilliance."
 
-    mode_instructions = {
+mode_instructions = {
         "standard": """FORMAT: Academic Standard
 Use headers like "##  Academic Standard"
 Show Given: [equation]
