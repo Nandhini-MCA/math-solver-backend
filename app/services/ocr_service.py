@@ -10,10 +10,11 @@ OCR_PROMPT = (
     "Return ONLY the extracted text/question — do not solve it, do not add commentary."
 )
 
+
 async def extract_text_from_image(file_path: str) -> str:
     """
     Extracts text/math from an image.
-    Primary:  Groq Llama 4 Scout Vision (meta-llama/llama-4-scout-17b-16e-instruct)
+    Primary:  Groq Llama 3.2 Vision (llama-3.2-11b-vision-preview)
     Fallback: Gemini 1.5 Flash Vision
     """
     groq_error_msg = "not attempted"
@@ -22,6 +23,7 @@ async def extract_text_from_image(file_path: str) -> str:
     # ── Attempt 1: Groq Llama 4 Scout Vision (Primary) ───────────────────────
     try:
         from app.services.ai_service import groq_vision_call
+
         result = await groq_vision_call(file_path, OCR_PROMPT)
         if result and len(result.strip()) > 3:
             print(f"Groq Vision OCR success for: {file_path}")
@@ -54,5 +56,5 @@ async def extract_text_from_image(file_path: str) -> str:
         print(f"Gemini Vision OCR also failed: {e}")
 
     raise RuntimeError(
-        f"OCR failed — Groq: {groq_error_msg} | Gemini: {gemini_error_msg}"
+        "Unable to read the image. Please try uploading a clearer image with visible text or equations. If the problem persists, try a different image or use text input instead."
     )
